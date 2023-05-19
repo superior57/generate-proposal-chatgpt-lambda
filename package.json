@@ -1,0 +1,8 @@
+{
+  "name": "chatgpt",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "openai": "^3.2.1"
+  }
+}

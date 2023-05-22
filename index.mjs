@@ -2,11 +2,6 @@ import { Configuration, OpenAIApi } from "openai";
 
 export const handler = async (event) => {
   try {
-    const configuration = new Configuration({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    const openai = new OpenAIApi(configuration);
-
     const body =
       typeof event.body === "object"
         ? event.body
@@ -14,25 +9,41 @@ export const handler = async (event) => {
 
     console.log(body);
 
-    const { resume, description } = body;
+    const { resume, description, clientInfo, name, clientName, openai_api_key } = body;
+    
+    if (!openai_api_key) {
+      throw new Error('Open-AI api key does not exists.');
+    }
+    
+    const configuration = new Configuration({
+      apiKey: openai_api_key,
+    });
+    const openai = new OpenAIApi(configuration);
 
-    const jobdescription = `${description}
+    const resumeStr = `
+    ${resume}
+
+    this is my profile
+    `;
+
+    const descriptionStr = `${description}
 
     this is job description
     `;
 
-    const client = `
-    client name is John
+    const prompt = `
+    show me real example for best proposal for the above job description and my profile, 
+    keep simple,
+    keep 2 or 3 phrase for main body,
+    start with Hello ${clientName.replace(".", "")},
+    and end with Sincerely \n ${name}
     `;
-
-    const prompt = `generate best proposal for the above job description`;
 
     const responseAi = await openai.createChatCompletion({
       model: process.env.OPENAI_MODEL,
       messages: [
-        { role: "user", content: resume },
-        { role: "user", content: jobdescription },
-        { role: "user", content: client },
+        { role: "user", content: resumeStr },
+        { role: "user", content: descriptionStr },
         { role: "user", content: prompt },
       ],
     });
@@ -44,9 +55,7 @@ export const handler = async (event) => {
     const response = {
       statusCode: 200,
       body: {
-        data: {
-          message: result.trim(),
-        },
+        message: result.trim(),
       },
     };
     return response;
